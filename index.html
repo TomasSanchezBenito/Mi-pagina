@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Generador de Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 40px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      margin-top: 0;
+    }
+    input[type="text"], input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0 20px;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 12px;
+      color: gray;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Generador de Test en HTML</h1>
+
+  <label for="file">Sube tu archivo .txt con preguntas:</label>
+  <input type="file" id="file" accept=".txt">
+
+  <label for="titulo">Título del test:</label>
+  <input type="text" id="titulo" placeholder="Ej: Test de Matemáticas">
+
+  <label for="nombreArchivo">Nombre del archivo de salida (.html):</label>
+  <input type="text" id="nombreArchivo" placeholder="Ej: test_matematicas.html">
+
+  <button onclick="procesarArchivo()">Generar</button>
+
+  <div class="footer">Desarrollado por Antonio Jesús Camarero, 2025</div>
+</div>
+
+<script>
+  // Inicializar Supabase
+  const supabase = supabase.createClient(
+    'https://iscfgvqmgqmkwmusmuho.supabase.co',   // ← Reemplaza esto
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzY2ZndnFtZ3Fta3dtdXNtdWhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4ODQ0MDIsImV4cCI6MjA2NDQ2MDQwMn0.8z4SvLexwUINVMkc-MqtiF2E17_WBEBdWF-fg24qX6M'                  // ← Reemplaza esto
+  );
+
+  function parsearPreguntas(texto) {
+    const lineas = texto.split(/\r?\n/);
+    const preguntas = [];
+    let preguntaActual = null;
+
+    lineas.forEach(linea => {
+      linea = linea.trim();
+      if (!linea) return;
+
+      if (linea.startsWith('#')) {
+        if (preguntaActual) preguntas.push(preguntaActual);
+        preguntaActual = {
+          pregunta: linea.slice(1).trim(),
+          opciones: [],
+          correcta: -1
+        };
+      } else if (/^(\*?[a-d]\))/.test(linea)) {
+        const esCorrecta = linea.startsWith('*');
+        const cleanLine = esCorrecta ? linea.slice(1).trim() : linea;
+        const textoOpcion = cleanLine.slice(2).trim();
+
+        if (preguntaActual) {
+          const idx = preguntaActual.opciones.length;
+          preguntaActual.opciones.push(textoOpcion);
+          if (esCorrecta) preguntaActual.correcta = idx;
+        }
+      }
+    });
+
+    if (preguntaActual) preguntas.push(preguntaActual);
+    return preguntas;
+  }
+
+  function generarHTML(preguntas, titulo) {
+    const preguntasJS = JSON.stringify(preguntas, null, 2);
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>${titulo}</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
+    .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    h1 { font-size: 22px; margin-bottom: 20px; }
+    .option { margin: 10px 0; padding: 12px; border: 2px solid #ccc; border-radius: 8px; cursor: pointer; }
+    .option.selected { border-color: #007bff; background-color: #e7f0fe; }
+    .option.correct { background-color: #d4edda; border-color: #28a745; }
+    .option.incorrect { background-color: #f8d7da; border-color: #dc3545; }
+    button { margin-top: 20px; padding: 10px 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>${titulo}</h1>
+  <div id="quiz">
+    <div id="question"></div>
+    <div id="options"></div>
+    <button id="check-button">Comprobar</button>
+    <button id="next-button" style="display:none;">Siguiente</button>
+    <div id="results" style="margin-top:20px; font-weight:bold;"></div>
+  </div>
+</div>
+
+<script>
+const preguntas = ${preguntasJS};
+let current = 0;
+let correctas = 0;
+let selected = null;
+
+const questionDiv = document.getElementById('question');
+const optionsDiv = document.getElementById('options');
+const checkBtn = document.getElementById('check-button');
+const nextBtn = document.getElementById('next-button');
+const results = document.getElementById('results');
+
+function mostrarPregunta() {
+  selected = null;
+  const p = preguntas[current];
+  questionDiv.textContent = p.pregunta;
+  optionsDiv.innerHTML = '';
+  p.opciones.forEach((opcion, idx) => {
+    const div = document.createElement('div');
+    div.className = 'option';
+    div.textContent = String.fromCharCode(97 + idx) + ') ' + opcion;
+    div.dataset.idx = idx;
+    div.onclick = () => {
+      document.querySelectorAll('.option').forEach(el => el.classList.remove('selected'));
+      div.classList.add('selected');
+      selected = div;
+    };
+    optionsDiv.appendChild(div);
+  });
+  checkBtn.style.display = 'inline-block';
+  nextBtn.style.display = 'none';
+  results.textContent = '';
+}
+
+checkBtn.onclick = () => {
+  if (!selected) return alert("Selecciona una opción.");
+  const idx = parseInt(selected.dataset.idx);
+  const correcta = preguntas[current].correcta;
+  if (idx === correcta) {
+    selected.classList.add('correct');
+    correctas++;
+  } else {
+    selected.classList.add('incorrect');
+    document.querySelectorAll('.option')[correcta].classList.add('correct');
+  }
+  checkBtn.style.display = 'none';
+  nextBtn.style.display = 'inline-block';
+};
+
+nextBtn.onclick = () => {
+  current++;
+  if (current < preguntas.length) {
+    mostrarPregunta();
+  } else {
+    questionDiv.textContent = 'Test finalizado';
+    optionsDiv.innerHTML = '';
+    checkBtn.style.display = 'none';
+    nextBtn.style.display = 'none';
+    results.textContent = 'Correctas: ' + correctas + ' de ' + preguntas.length;
+  }
+};
+
+mostrarPregunta();
+<\/script>
+</body>
+</html>`;
+  }
+
+  function procesarArchivo() {
+    const archivo = document.getElementById('file').files[0];
+    const titulo = document.getElementById('titulo').value.trim();
+    let nombre = document.getElementById('nombreArchivo').value.trim();
+
+    if (!archivo) return alert("Sube un archivo .txt.");
+    if (!titulo) return alert("Escribe un título.");
+    if (!nombre) return alert("Escribe un nombre de archivo.");
+    if (!nombre.endsWith(".html")) nombre += ".html";
+
+    // Leer el contenido del archivo .txt
+    const lector = new FileReader();
+    lector.onload = function (e) {
+      const contenido = e.target.result;
+
+      // SUBIR archivo original .txt a Supabase
+      const txtBlob = new Blob([contenido], { type: 'text/plain' });
+      supabase.storage.from('tests').upload(archivo.name, txtBlob, {
+        cacheControl: '3600',
+        upsert: true
+      }).then(({ error }) => {
+        if (error) {
+          console.error('Error al subir .txt:', error.message);
+        } else {
+          console.log('Archivo .txt subido a Supabase correctamente.');
+        }
+      });
+
+      // Procesar preguntas y generar HTML
+      const preguntas = parsearPreguntas(contenido);
+      if (!preguntas.length) {
+        alert("No se detectaron preguntas válidas. Revisa el formato del archivo.");
+        return;
+      }
+
+      const html = generarHTML(preguntas, titulo);
+      descargarArchivo(html, nombre);
+    };
+    lector.readAsText(archivo, 'UTF-8');
+  }
+
+  function descargarArchivo(contenido, nombre) {
+    const blob = new Blob([contenido], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nombre;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+</script>
+</body>
+</html>
