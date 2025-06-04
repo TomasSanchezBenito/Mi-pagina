@@ -28,7 +28,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
-    // 🧠 CONFIGURA TUS DATOS DE SUPABASE
+    // CONFIGURA TUS DATOS DE SUPABASE
     const supabaseUrl = 'https://iscfgvqmgqmkwmusmuho.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzY2ZndnFtZ3Fta3dtdXNtdWhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4ODQ0MDIsImV4cCI6MjA2NDQ2MDQwMn0.8z4SvLexwUINVMkc-MqtiF2E17_WBEBdWF-fg24qX6M';
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
@@ -55,7 +55,7 @@
       if (!nombre) return alert("Escribe un nombre de archivo.");
       if (!nombre.endsWith(".html")) nombre += ".html";
 
-      // 🔁 SUBIR ARCHIVO .TXT A SUPABASE
+      // SUBIR ARCHIVO .TXT A SUPABASE
       const { data: subida, error: errorSubida } = await supabase.storage
         .from(bucketName)
         .upload(`uploads/${archivo.name}`, archivo, { upsert: true });
