@@ -18,9 +18,7 @@
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    h1 {
-      margin-top: 0;
-    }
+    h1 { margin-top: 0; }
     input[type="text"], input[type="file"] {
       width: 100%;
       padding: 10px;
@@ -45,8 +43,6 @@
       color: gray;
       text-align: center;
     }
-
-/* Ventana emergente */
     .popup {
       position: fixed;
       bottom: 20px;
@@ -76,50 +72,49 @@
     .popup button:hover {
       background-color: #218838;
     }
-
-button:disabled {
-  background-color: #ccc;
-  cursor: default;
-}
-
-button:disabled:hover {
-  background-color: #ccc;
-}
+    button:disabled {
+      background-color: #ccc;
+      cursor: default;
+    }
+    button:disabled:hover {
+      background-color: #ccc;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Generador de Test en HTML</h1>
-
     <label for="file">Sube tu archivo .txt con preguntas:</label>
     <input type="file" id="file" accept=".txt">
-
     <label for="titulo">Título del test:</label>
     <input type="text" id="titulo" placeholder="Ej: Test de Normativa">
-
     <label for="nombreArchivo">Nombre del archivo de salida (.html):</label>
     <input type="text" id="nombreArchivo" placeholder="Ej: test_normativa.html">
-
     <button id="btnGenerar" onclick="procesarArchivo()" disabled>Generar</button>
-
-
     <div class="footer">2025</div>
   </div>
 
-<!-- VENTANA EMERGENTE -->
   <div class="popup" id="popupAviso">
     <span>⚠️ Página de prueba, es posible que se almacenen los datos que se introduzcan.</span>
     <button onclick="aceptarAviso()">Aceptar</button>
   </div>
 
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.3/+esm" type="module"></script>
 
-  <script>
+  <!-- Lógica principal -->
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.3/+esm";
 
-// Función para aceptar el aviso
-  function aceptarAviso() {
-    document.getElementById('popupAviso').style.display = 'none';
-    document.getElementById('btnGenerar').disabled = false;
-  }
+    const supabase = createClient(
+      'https://<TU-PROYECTO>.supabase.co',  // 🔁 Reemplaza
+      'tu-anon-key'                         // 🔁 Reemplaza
+    );
+
+    function aceptarAviso() {
+      document.getElementById('popupAviso').style.display = 'none';
+      document.getElementById('btnGenerar').disabled = false;
+    }
 
     function parsearPreguntas(texto) {
       const lineas = texto.split(/\r?\n/);
@@ -132,16 +127,11 @@ button:disabled:hover {
 
         if (linea.startsWith('#')) {
           if (preguntaActual) preguntas.push(preguntaActual);
-          preguntaActual = {
-            pregunta: linea.slice(1).trim(),
-            opciones: [],
-            correcta: -1
-          };
+          preguntaActual = { pregunta: linea.slice(1).trim(), opciones: [], correcta: -1 };
         } else if (/^(\*?[a-d]\))/.test(linea)) {
           const esCorrecta = linea.startsWith('*');
           const cleanLine = esCorrecta ? linea.slice(1).trim() : linea;
           const textoOpcion = cleanLine.slice(2).trim();
-
           if (preguntaActual) {
             const idx = preguntaActual.opciones.length;
             preguntaActual.opciones.push(textoOpcion);
@@ -156,8 +146,6 @@ button:disabled:hover {
 
     function generarHTML(preguntas, titulo) {
       const preguntasJS = JSON.stringify(preguntas, null, 2);
-      const logoBase64 = "data:image/png;base64,"
-
       return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -166,7 +154,6 @@ button:disabled:hover {
   <style>
     body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
     .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    h1 { font-size: 22px; margin-bottom: 20px; }
     .option { margin: 10px 0; padding: 12px; border: 2px solid #ccc; border-radius: 8px; cursor: pointer; }
     .option.selected { border-color: #007bff; background-color: #e7f0fe; }
     .option.correct { background-color: #d4edda; border-color: #28a745; }
@@ -176,18 +163,16 @@ button:disabled:hover {
 </head>
 <body>
 <div class="container">
-  <img src="${logoBase64}" alt="Logo" style="max-width:150px; margin-bottom:20px;">
   <h1>${titulo}</h1>
   <div id="quiz">
-  <div id="progress" style="margin-bottom:10px; font-size:14px; color: #666;"></div>
-  <div id="question" style="font-weight:bold;"></div>
-  <div id="options"></div>
+    <div id="progress" style="margin-bottom:10px; font-size:14px; color: #666;"></div>
+    <div id="question" style="font-weight:bold;"></div>
+    <div id="options"></div>
     <button id="check-button">Comprobar</button>
     <button id="next-button" style="display:none;">Siguiente</button>
     <div id="results" style="margin-top:20px; font-weight:bold;"></div>
   </div>
 </div>
-
 <script>
 const preguntas = ${preguntasJS};
 let current = 0;
@@ -203,10 +188,7 @@ const results = document.getElementById('results');
 function mostrarPregunta() {
   selected = null;
   const p = preguntas[current];
-
-  // Nueva línea para mostrar progreso
   document.getElementById('progress').textContent = 'Pregunta ' + (current + 1) + ' de ' + preguntas.length;
-
   questionDiv.textContent = p.pregunta;
   optionsDiv.innerHTML = '';
   p.opciones.forEach((opcion, idx) => {
@@ -225,8 +207,6 @@ function mostrarPregunta() {
   nextBtn.style.display = 'none';
   results.textContent = '';
 }
-
-
 checkBtn.onclick = () => {
   if (!selected) return alert("Selecciona una opción.");
   const idx = parseInt(selected.dataset.idx);
@@ -241,7 +221,6 @@ checkBtn.onclick = () => {
   checkBtn.style.display = 'none';
   nextBtn.style.display = 'inline-block';
 };
-
 nextBtn.onclick = () => {
   current++;
   if (current < preguntas.length) {
@@ -254,14 +233,13 @@ nextBtn.onclick = () => {
     results.textContent = 'Correctas: ' + correctas + ' de ' + preguntas.length;
   }
 };
-
 mostrarPregunta();
-<\/script>
+</script>
 </body>
 </html>`;
     }
 
-    function procesarArchivo() {
+    async function procesarArchivo() {
       const archivo = document.getElementById('file').files[0];
       const titulo = document.getElementById('titulo').value.trim();
       let nombre = document.getElementById('nombreArchivo').value.trim();
@@ -271,13 +249,25 @@ mostrarPregunta();
       if (!nombre) return alert("Escribe un nombre de archivo.");
       if (!nombre.endsWith(".html")) nombre += ".html";
 
+      // 🔁 SUBIR .TXT ORIGINAL A SUPABASE
+      const { data: subida, error: errorSubida } = await supabase.storage
+        .from('test-files')  // <-- Cambia si tu bucket tiene otro nombre
+        .upload(`uploads/${archivo.name}`, archivo, { upsert: true });
+
+      if (errorSubida) {
+        console.error("Error subiendo archivo .txt:", errorSubida);
+        alert("❌ No se pudo subir el archivo .txt.");
+      } else {
+        console.log("✅ Archivo .txt subido correctamente:", subida.path);
+      }
+
       const lector = new FileReader();
       lector.onload = function (e) {
         const contenido = e.target.result;
         const preguntas = parsearPreguntas(contenido);
 
         if (!preguntas.length) {
-          alert("No se detectaron preguntas válidas. Revisa el formato del archivo.");
+          alert("No se detectaron preguntas válidas.");
           return;
         }
 
