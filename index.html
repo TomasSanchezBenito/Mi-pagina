@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Generador de Test</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -46,69 +45,120 @@
       color: gray;
       text-align: center;
     }
+
+/* Ventana emergente */
+    .popup {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      max-width: 600px;
+      margin: auto;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      padding: 15px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .popup button {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .popup button:hover {
+      background-color: #218838;
+    }
+
+button:disabled {
+  background-color: #ccc;
+  cursor: default;
+}
+
+button:disabled:hover {
+  background-color: #ccc;
+}
   </style>
 </head>
 <body>
-<div class="container">
-  <h1>Generador de Test en HTML</h1>
+  <div class="container">
+    <h1>Generador de Test en HTML</h1>
 
-  <label for="file">Sube tu archivo .txt con preguntas:</label>
-  <input type="file" id="file" accept=".txt">
+    <label for="file">Sube tu archivo .txt con preguntas:</label>
+    <input type="file" id="file" accept=".txt">
 
-  <label for="titulo">Título del test:</label>
-  <input type="text" id="titulo" placeholder="Ej: Test de Matemáticas">
+    <label for="titulo">Título del test:</label>
+    <input type="text" id="titulo" placeholder="Ej: Test de Normativa">
 
-  <label for="nombreArchivo">Nombre del archivo de salida (.html):</label>
-  <input type="text" id="nombreArchivo" placeholder="Ej: test_matematicas.html">
+    <label for="nombreArchivo">Nombre del archivo de salida (.html):</label>
+    <input type="text" id="nombreArchivo" placeholder="Ej: test_normativa.html">
 
-  <button onclick="procesarArchivo()">Generar</button>
+    <button id="btnGenerar" onclick="procesarArchivo()" disabled>Generar</button>
 
-  <div class="footer">Desarrollado por Antonio Jesús Camarero, 2025</div>
-</div>
 
-<script>
-  // Inicializar Supabase
-  const supabase = supabase.createClient(
-    'https://iscfgvqmgqmkwmusmuho.supabase.co',   // ← Reemplaza esto
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzY2ZndnFtZ3Fta3dtdXNtdWhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4ODQ0MDIsImV4cCI6MjA2NDQ2MDQwMn0.8z4SvLexwUINVMkc-MqtiF2E17_WBEBdWF-fg24qX6M'                  // ← Reemplaza esto
-  );
+    <div class="footer">2025</div>
+  </div>
 
-  function parsearPreguntas(texto) {
-    const lineas = texto.split(/\r?\n/);
-    const preguntas = [];
-    let preguntaActual = null;
+<!-- VENTANA EMERGENTE -->
+  <div class="popup" id="popupAviso">
+    <span>⚠️ Página de prueba, es posible que se almacenen los datos que se introduzcan.</span>
+    <button onclick="aceptarAviso()">Aceptar</button>
+  </div>
 
-    lineas.forEach(linea => {
-      linea = linea.trim();
-      if (!linea) return;
 
-      if (linea.startsWith('#')) {
-        if (preguntaActual) preguntas.push(preguntaActual);
-        preguntaActual = {
-          pregunta: linea.slice(1).trim(),
-          opciones: [],
-          correcta: -1
-        };
-      } else if (/^(\*?[a-d]\))/.test(linea)) {
-        const esCorrecta = linea.startsWith('*');
-        const cleanLine = esCorrecta ? linea.slice(1).trim() : linea;
-        const textoOpcion = cleanLine.slice(2).trim();
+  <script>
 
-        if (preguntaActual) {
-          const idx = preguntaActual.opciones.length;
-          preguntaActual.opciones.push(textoOpcion);
-          if (esCorrecta) preguntaActual.correcta = idx;
-        }
-      }
-    });
-
-    if (preguntaActual) preguntas.push(preguntaActual);
-    return preguntas;
+// Función para aceptar el aviso
+  function aceptarAviso() {
+    document.getElementById('popupAviso').style.display = 'none';
+    document.getElementById('btnGenerar').disabled = false;
   }
 
-  function generarHTML(preguntas, titulo) {
-    const preguntasJS = JSON.stringify(preguntas, null, 2);
-    return `<!DOCTYPE html>
+    function parsearPreguntas(texto) {
+      const lineas = texto.split(/\r?\n/);
+      const preguntas = [];
+      let preguntaActual = null;
+
+      lineas.forEach(linea => {
+        linea = linea.trim();
+        if (!linea) return;
+
+        if (linea.startsWith('#')) {
+          if (preguntaActual) preguntas.push(preguntaActual);
+          preguntaActual = {
+            pregunta: linea.slice(1).trim(),
+            opciones: [],
+            correcta: -1
+          };
+        } else if (/^(\*?[a-d]\))/.test(linea)) {
+          const esCorrecta = linea.startsWith('*');
+          const cleanLine = esCorrecta ? linea.slice(1).trim() : linea;
+          const textoOpcion = cleanLine.slice(2).trim();
+
+          if (preguntaActual) {
+            const idx = preguntaActual.opciones.length;
+            preguntaActual.opciones.push(textoOpcion);
+            if (esCorrecta) preguntaActual.correcta = idx;
+          }
+        }
+      });
+
+      if (preguntaActual) preguntas.push(preguntaActual);
+      return preguntas;
+    }
+
+    function generarHTML(preguntas, titulo) {
+      const preguntasJS = JSON.stringify(preguntas, null, 2);
+      const logoBase64 = "data:image/png;base64,"
+
+      return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -126,10 +176,12 @@
 </head>
 <body>
 <div class="container">
+  <img src="${logoBase64}" alt="Logo" style="max-width:150px; margin-bottom:20px;">
   <h1>${titulo}</h1>
   <div id="quiz">
-    <div id="question"></div>
-    <div id="options"></div>
+  <div id="progress" style="margin-bottom:10px; font-size:14px; color: #666;"></div>
+  <div id="question" style="font-weight:bold;"></div>
+  <div id="options"></div>
     <button id="check-button">Comprobar</button>
     <button id="next-button" style="display:none;">Siguiente</button>
     <div id="results" style="margin-top:20px; font-weight:bold;"></div>
@@ -151,6 +203,10 @@ const results = document.getElementById('results');
 function mostrarPregunta() {
   selected = null;
   const p = preguntas[current];
+
+  // Nueva línea para mostrar progreso
+  document.getElementById('progress').textContent = 'Pregunta ' + (current + 1) + ' de ' + preguntas.length;
+
   questionDiv.textContent = p.pregunta;
   optionsDiv.innerHTML = '';
   p.opciones.forEach((opcion, idx) => {
@@ -169,6 +225,7 @@ function mostrarPregunta() {
   nextBtn.style.display = 'none';
   results.textContent = '';
 }
+
 
 checkBtn.onclick = () => {
   if (!selected) return alert("Selecciona una opción.");
@@ -202,60 +259,45 @@ mostrarPregunta();
 <\/script>
 </body>
 </html>`;
-  }
+    }
 
-  function procesarArchivo() {
-    const archivo = document.getElementById('file').files[0];
-    const titulo = document.getElementById('titulo').value.trim();
-    let nombre = document.getElementById('nombreArchivo').value.trim();
+    function procesarArchivo() {
+      const archivo = document.getElementById('file').files[0];
+      const titulo = document.getElementById('titulo').value.trim();
+      let nombre = document.getElementById('nombreArchivo').value.trim();
 
-    if (!archivo) return alert("Sube un archivo .txt.");
-    if (!titulo) return alert("Escribe un título.");
-    if (!nombre) return alert("Escribe un nombre de archivo.");
-    if (!nombre.endsWith(".html")) nombre += ".html";
+      if (!archivo) return alert("Sube un archivo .txt.");
+      if (!titulo) return alert("Escribe un título.");
+      if (!nombre) return alert("Escribe un nombre de archivo.");
+      if (!nombre.endsWith(".html")) nombre += ".html";
 
-    // Leer el contenido del archivo .txt
-    const lector = new FileReader();
-    lector.onload = function (e) {
-      const contenido = e.target.result;
+      const lector = new FileReader();
+      lector.onload = function (e) {
+        const contenido = e.target.result;
+        const preguntas = parsearPreguntas(contenido);
 
-      // SUBIR archivo original .txt a Supabase
-      const txtBlob = new Blob([contenido], { type: 'text/plain' });
-      supabase.storage.from('tests').upload(archivo.name, txtBlob, {
-        cacheControl: '3600',
-        upsert: true
-      }).then(({ error }) => {
-        if (error) {
-          console.error('Error al subir .txt:', error.message);
-        } else {
-          console.log('Archivo .txt subido a Supabase correctamente.');
+        if (!preguntas.length) {
+          alert("No se detectaron preguntas válidas. Revisa el formato del archivo.");
+          return;
         }
-      });
 
-      // Procesar preguntas y generar HTML
-      const preguntas = parsearPreguntas(contenido);
-      if (!preguntas.length) {
-        alert("No se detectaron preguntas válidas. Revisa el formato del archivo.");
-        return;
-      }
+        const html = generarHTML(preguntas, titulo);
+        descargarArchivo(html, nombre);
+      };
+      lector.readAsText(archivo, 'UTF-8');
+    }
 
-      const html = generarHTML(preguntas, titulo);
-      descargarArchivo(html, nombre);
-    };
-    lector.readAsText(archivo, 'UTF-8');
-  }
-
-  function descargarArchivo(contenido, nombre) {
-    const blob = new Blob([contenido], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = nombre;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-</script>
+    function descargarArchivo(contenido, nombre) {
+      const blob = new Blob([contenido], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = nombre;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  </script>
 </body>
 </html>
